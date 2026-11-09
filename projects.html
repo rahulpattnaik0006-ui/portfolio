@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Production Projects — Kishlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --navy-deep: #05080e;
+      --navy-card: rgba(11, 17, 29, 0.78);
+      --navy-hover: rgba(17, 26, 44, 0.92);
+      --navy-border: rgba(212, 175, 55, 0.22);
+      
+      --gold-primary: #d4af37;
+      --gold-bright: #f3db98;
+      
+      --beige-text: #eae4d9;
+      --beige-muted: #9fa7b5;
+      --slate-dim: #5a6474;
+
+      --font-serif: 'Cinzel', serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--navy-deep);
+      color: var(--beige-text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Constantly Moving Canvas Layer */
+    #kineticCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Ambient Coordinate Grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        linear-gradient(to right, rgba(234, 228, 217, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(234, 228, 217, 0.02) 1px, transparent 1px);
+      background-size: 70px 70px;
+      z-index: 1;
+    }
+
+    /* Masthead Navigation */
+    .masthead {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding: 0 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(5, 8, 14, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--navy-border);
+      z-index: 50;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .brand-monogram {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 0.1em;
+    }
+
+    .brand-sep { color: var(--slate-dim); }
+    .brand-descriptor { color: var(--beige-muted); letter-spacing: 0.15em; font-size: 0.72rem; }
+
+    .masthead-nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      color: var(--beige-muted);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      padding: 6px 0;
+      position: relative;
+      transition: color 0.25s ease;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--gold-bright);
+    }
+
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gold-bright);
+      box-shadow: 0 0 8px var(--gold-bright);
+    }
+
+    .telemetry-pill {
+      padding: 4px 12px;
+      background: #090e18;
+      border: 1px solid var(--navy-border);
+      color: var(--gold-bright);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+
+    /* Page Content Stage */
+    .projects-container {
+      position: relative;
+      z-index: 2;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 130px 4vw 80px;
+    }
+
+    .section-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.18em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 2.8rem;
+      color: var(--beige-text);
+      letter-spacing: -0.01em;
+      margin-bottom: 14px;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--beige-muted);
+      max-width: 720px;
+      margin-bottom: 50px;
+    }
+
+    /* ============================================================
+       NON-BASIC GEOMETRIC PRISM CARDS (Asymmetrical Decagon Cutouts)
+       ============================================================ */
+    .poly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 36px;
+    }
+
+    .poly-wrap {
+      position: relative;
+      clip-path: polygon(
+        38px 0%,
+        calc(100% - 20px) 0%,
+        100% 20px,
+        100% calc(100% - 38px),
+        calc(100% - 38px) 100%,
+        20px 100%,
+        0% calc(100% - 20px),
+        0% 38px
+      );
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.45) 0%, rgba(212, 175, 55, 0.08) 50%, rgba(243, 219, 152, 0.35) 100%);
+      padding: 1.5px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+    }
+
+    .poly-wrap:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 35px rgba(212, 175, 55, 0.25);
+    }
+
+    .poly-card {
+      position: relative;
+      background: radial-gradient(circle at 15% 15%, var(--navy-hover), var(--navy-card) 85%);
+      clip-path: polygon(
+        38px 0%,
+        calc(100% - 20px) 0%,
+        100% 20px,
+        100% calc(100% - 38px),
+        calc(100% - 38px) 100%,
+        20px 100%,
+        0% calc(100% - 20px),
+        0% 38px
+      );
+      padding: 36px 32px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 310px;
+    }
+
+    .crosshair-tl {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 12px;
+      height: 12px;
+      border-top: 1.5px solid var(--gold-bright);
+      border-left: 1.5px solid var(--gold-bright);
+      pointer-events: none;
+    }
+
+    .crosshair-br {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      width: 12px;
+      height: 12px;
+      border-bottom: 1.5px solid var(--gold-bright);
+      border-right: 1.5px solid var(--gold-bright);
+      pointer-events: none;
+    }
+
+    .card-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-protocol {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      color: var(--gold-primary);
+    }
+
+    .card-pulse-node {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-bright);
+      box-shadow: 0 0 8px var(--gold-bright);
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--beige-text);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+      transition: color 0.25s ease;
+    }
+
+    .poly-wrap:hover .card-title {
+      color: var(--gold-bright);
+    }
+
+    .card-subtitle {
+      font-size: 0.94rem;
+      line-height: 1.6;
+      color: var(--beige-muted);
+      margin-bottom: 24px;
+    }
+
+    .card-link-strip {
+      padding-top: 20px;
+      border-top: 1px dashed rgba(212, 175, 55, 0.2);
+    }
+
+    .poly-url-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-decoration: none !important;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      transition: all 0.25s ease;
+    }
+
+    .poly-url-link .url-label {
+      color: var(--beige-text) !important;
+      transition: color 0.25s ease;
+    }
+
+    .poly-url-link:hover .url-label {
+      color: var(--gold-bright) !important;
+      text-shadow: 0 0 8px rgba(243, 219, 152, 0.4);
+    }
+
+    .diamond-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      color: var(--gold-bright);
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.25s ease;
+    }
+
+    .poly-url-link:hover .diamond-arrow {
+      background: var(--gold-primary);
+      color: #04070c;
+      transform: translate(3px, -3px);
+      box-shadow: 0 0 12px var(--gold-bright);
+    }
+
+    .terminal-footer {
+      border-top: 1px solid var(--navy-border);
+      padding: 40px 4vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--navy-deep);
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-left p {
+      font-size: 0.85rem;
+      color: var(--beige-muted);
+      margin-top: 4px;
+    }
+
+    .footer-right {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--slate-dim);
+      text-align: right;
+    }
+
+    @media (max-width: 768px) {
+      .masthead-nav { display: none; }
+      .section-title { font-size: 2.2rem; }
+      .poly-grid { grid-template-columns: 1fr; }
+      .terminal-footer { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-right { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Constantly Moving Geometric Object Canvas -->
+  <canvas id="kineticCanvas"></canvas>
+  <div class="bg-grid"></div>
+
+  <!-- Masthead Bar -->
+  <header class="masthead">
+    <a href="index.html" class="brand-group">
+      <span class="brand-monogram">KR</span>
+      <span class="brand-sep">/</span>
+      <span class="brand-descriptor">TERMINAL PROTOCOL</span>
+    </a>
+
+    <nav class="masthead-nav">
+      <a href="projects.html" class="nav-link active">ALL PROJECTS</a>
+      <a href="skills.html" class="nav-link">SKILLS</a>
+      <a href="contact.html" class="nav-link">MY CONTACT</a>
+    </nav>
+
+    <div class="telemetry-pill">SYSTEM ARCHIVE // 06 NODES</div>
+  </header>
+
+  <!-- Projects Stage -->
+  <main class="projects-container">
+    <div class="section-badge">
+      <span>▲</span> // VERIFIED DEPLOYMENTS & PROTOCOLS
+    </div>
+    <h1 class="section-title">Production Systems & Live Deployments</h1>
+    <p class="section-desc">
+      Comprehensive suite of quantitative terminals, 3D digital twins, autonomous platforms, and distributed web interfaces.
+    </p>
+
+    <!-- 6 Asymmetrical Polygonal Geometry Cards -->
+    <div class="poly-grid">
+
+      <!-- 01: GodStocks -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-01 // QUANT FINTECH</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">GodStocks</h2>
+            <p class="card-subtitle">Institutional Quantitative Market Intelligence & High-Frequency Streaming Engine</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://godstockss.vercel.app/" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">godstockss.vercel.app</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 02: Zenith Enclave -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-02 // 3D DIGITAL TWIN</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">Zenith Enclave</h2>
+            <p class="card-subtitle">Interactive Spatial Township OS, Occupancy Allocator & WebGL Masterplan</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://zenith-enclave.vercel.app/" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">zenith-enclave.vercel.app</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03: Living Terrarium -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-03 // IMMERSIVE COMMERCE</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">Living Terrarium</h2>
+            <p class="card-subtitle">Sensory Botanical Showcase with Dynamic Spatial Transition Runtimes</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://livingterrarium-bice.vercel.app/" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">livingterrarium-bice.vercel.app</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04: Coaching System -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-04 // ACADEMIC PLATFORM</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">Coaching System OS</h2>
+            <p class="card-subtitle">Multi-Tier Academic Management Infrastructure & Candidate Analytics Pipeline</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://coaching-system-u1d8.vercel.app/" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">coaching-system-u1d8.vercel.app</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 05: FunGro -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-05 // GAMIFIED ENGAGEMENT</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">FunGro Platform</h2>
+            <p class="card-subtitle">Real-Time Micro-Capital Engine & Behavioral Youth Earning Ecosystem</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://fungro-neon.vercel.app/index.html#" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">fungro-neon.vercel.app</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 06: Chikitsak -->
+      <div class="poly-wrap">
+        <div class="poly-card">
+          <div class="crosshair-tl"></div>
+          <div class="crosshair-br"></div>
+          <div>
+            <div class="card-meta-row">
+              <span class="card-protocol">PRJ-06 // HEALTHCARE ARCHITECTURE</span>
+              <span class="card-pulse-node"></span>
+            </div>
+            <h2 class="card-title">Chikitsak Telehealth</h2>
+            <p class="card-subtitle">Distributed Clinical Access Portal & Rapid Patient Consultation Matrix</p>
+          </div>
+          <div class="card-link-strip">
+            <a href="https://chikitsak.tiiny.site/" target="_blank" rel="noopener noreferrer" class="poly-url-link">
+              <span class="url-label">chikitsak.tiiny.site</span>
+              <span class="diamond-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="terminal-footer">
+    <div class="footer-left">
+      <span class="brand-monogram">KR</span>
+      <p>Kishlay &bull; Systems Architect & Autonomous Agent Engineer.</p>
+    </div>
+    <div class="footer-right">
+      <span>INDEX: 6 PRODUCTION DEPLOYMENTS</span><br />
+      <span>STATUS: DISTRIBUTED / OPERATIONAL</span>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       CONTINUOUSLY MOVING 3D GEOMETRIC OBJECT ENGINE
+       ============================================================ -->
+  <script>
+    (() => {
+      const canvas = document.getElementById('kineticCanvas');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // 3D Point Rotation & Projection Helpers
+      function rotateX(p, a) {
+        const cos = Math.cos(a), sin = Math.sin(a);
+        return { x: p.x, y: p.y * cos - p.z * sin, z: p.y * sin + p.z * cos };
+      }
+      function rotateY(p, a) {
+        const cos = Math.cos(a), sin = Math.sin(a);
+        return { x: p.x * cos + p.z * sin, y: p.y, z: -p.x * sin + p.z * cos };
+      }
+      function rotateZ(p, a) {
+        const cos = Math.cos(a), sin = Math.sin(a);
+        return { x: p.x * cos - p.y * sin, y: p.x * sin + p.y * cos, z: p.z };
+      }
+
+      /* 1. Tumbling 3D Octahedron Wireframes */
+      class Octahedron3D {
+        constructor() {
+          this.init(true);
+        }
+        init(randomY = false) {
+          this.x = Math.random() * w;
+          this.y = randomY ? Math.random() * h : (Math.random() > 0.5 ? -60 : h + 60);
+          this.z = Math.random() * 200 + 100;
+          this.size = Math.random() * 25 + 30;
+
+          // Continuous autonomous movement speeds
+          this.vx = (Math.random() - 0.5) * 1.4;
+          this.vy = (Math.random() - 0.5) * 1.4;
+          if (Math.abs(this.vx) < 0.3) this.vx = 0.5;
+          if (Math.abs(this.vy) < 0.3) this.vy = -0.5;
+
+          // 3D rotation angles & velocities
+          this.rx = Math.random() * Math.PI;
+          this.ry = Math.random() * Math.PI;
+          this.rz = Math.random() * Math.PI;
+          this.drx = (Math.random() - 0.5) * 0.025;
+          this.dry = (Math.random() - 0.5) * 0.03;
+          this.drz = (Math.random() - 0.5) * 0.02;
+
+          this.alpha = Math.random() * 0.25 + 0.12;
+
+          // Canonical Octahedron 6 vertices
+          this.baseVertices = [
+            { x: 1, y: 0, z: 0 },
+            { x: -1, y: 0, z: 0 },
+            { x: 0, y: 1, z: 0 },
+            { x: 0, y: -1, z: 0 },
+            { x: 0, y: 0, z: 1 },
+            { x: 0, y: 0, z: -1 }
+          ];
+
+          // 12 connecting edges
+          this.edges = [
+            [0,2], [2,1], [1,3], [3,0],
+            [0,4], [1,4], [2,4], [3,4],
+            [0,5], [1,5], [2,5], [3,5]
+          ];
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.rx += this.drx;
+          this.ry += this.dry;
+          this.rz += this.drz;
+
+          // Seamless edge bouncing/wrapping
+          if (this.x < -80) this.x = w + 80;
+          if (this.x > w + 80) this.x = -80;
+          if (this.y < -80) this.y = h + 80;
+          if (this.y > h + 80) this.y = -80;
+        }
+
+        draw() {
+          const transformed = this.baseVertices.map(v => {
+            let p = { x: v.x * this.size, y: v.y * this.size, z: v.z * this.size };
+            p = rotateX(p, this.rx);
+            p = rotateY(p, this.ry);
+            p = rotateZ(p, this.rz);
+            // Perspective project
+            const fov = 350;
+            const scale = fov / (fov + p.z);
+            return {
+              x: this.x + p.x * scale,
+              y: this.y + p.y * scale
+            };
+          });
+
+          ctx.save();
+          ctx.strokeStyle = `rgba(212, 175, 55, ${this.alpha})`;
+          ctx.lineWidth = 1.2;
+
+          for (let [i, j] of this.edges) {
+            ctx.beginPath();
+            ctx.moveTo(transformed[i].x, transformed[i].y);
+            ctx.lineTo(transformed[j].x, transformed[j].y);
+            ctx.stroke();
+          }
+
+          // Central coordinate core point
+          ctx.fillStyle = `rgba(243, 219, 152, ${this.alpha * 1.5})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      /* 2. Floating Concentric Gyro / Radar Rings */
+      class GyroRing {
+        constructor() {
+          this.x = Math.random() * w;
+          this.y = Math.random() * h;
+          this.radius = Math.random() * 40 + 35;
+          this.vx = (Math.random() - 0.5) * 0.8;
+          this.vy = (Math.random() - 0.5) * 0.8;
+          this.angle = Math.random() * Math.PI * 2;
+          this.rotSpeed = (Math.random() - 0.5) * 0.015;
+          this.alpha = Math.random() * 0.18 + 0.06;
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.angle += this.rotSpeed;
+
+          if (this.x < -100) this.x = w + 100;
+          if (this.x > w + 100) this.x = -100;
+          if (this.y < -100) this.y = h + 100;
+          if (this.y > h + 100) this.y = -100;
+        }
+
+        draw() {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.angle);
+
+          // Outer dashed telemetry orbit
+          ctx.strokeStyle = `rgba(234, 228, 217, ${this.alpha * 0.8})`;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 8]);
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Inner rotating triangle
+          ctx.strokeStyle = `rgba(212, 175, 55, ${this.alpha})`;
+          ctx.beginPath();
+          for (let i = 0; i < 3; i++) {
+            const a = (i * 2 * Math.PI) / 3;
+            const px = Math.cos(a) * (this.radius * 0.65);
+            const py = Math.sin(a) * (this.radius * 0.65);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
+
+          // Orbiting marker bead
+          const ox = Math.cos(this.angle * 2) * this.radius;
+          const oy = Math.sin(this.angle * 2) * this.radius;
+          ctx.fillStyle = '#f3db98';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      /* 3. Fast Kinetic Vector Streaks */
+      class KineticStreak {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = Math.random() * w;
+          this.y = Math.random() * h;
+          this.len = Math.random() * 50 + 25;
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 2.5 + 1.2;
+          this.vx = Math.cos(angle) * speed;
+          this.vy = Math.sin(angle) * speed;
+          this.alpha = Math.random() * 0.25 + 0.08;
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < -80 || this.x > w + 80 || this.y < -80 || this.y > h + 80) {
+            this.reset();
+          }
+        }
+        draw() {
+          ctx.save();
+          ctx.strokeStyle = `rgba(243, 219, 152, ${this.alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(this.x - this.vx * 8, this.y - this.vy * 8);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // Initialize object pools
+      const octahedrons = Array.from({ length: 8 }, () => new Octahedron3D());
+      const gyros = Array.from({ length: 5 }, () => new GyroRing());
+      const streaks = Array.from({ length: 18 }, () => new KineticStreak());
+
+      // Continuous Execution Loop
+      function renderLoop() {
+        ctx.clearRect(0, 0, w, h);
+
+        // Constantly update and draw kinetic elements
+        for (let streak of streaks) {
+          streak.update();
+          streak.draw();
+        }
+
+        for (let gyro of gyros) {
+          gyro.update();
+          gyro.draw();
+        }
+
+        for (let octa of octahedrons) {
+          octa.update();
+          octa.draw();
+        }
+
+        requestAnimationFrame(renderLoop);
+      }
+      renderLoop();
+    })();
+  </script>
+
+</body>
+</html>
